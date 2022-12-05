@@ -12,4 +12,11 @@ namespace Day02
         internal const char Paper = 'Y';
         internal const char Scissors = 'Z';
     }
+
+    internal static class DesiredResult
+    {
+        internal const char Loss = 'X';
+        internal const char Draw = 'Y';
+        internal const char Win = 'Z';
+    }
 }

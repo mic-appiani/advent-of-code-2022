@@ -1,38 +1,79 @@
-﻿
+﻿using Day02;
+using System.Text;
 
-
-
-
-using Day02;
-using System.Data;
-/// The score for a single round is the score for the shape you selected (1 for Rock, 2 for Paper,
-/// and 3 for Scissors) plus the score for the outcome of the round (0 if you lost, 3 if the round 
-/// was a draw, and 6 if you won). 
-/// 
-/// What would your total score be if everything goes exactly according to your strategy guide?
-/// Opponent:
 string? input;
+int totalScorePart1 = 0;
+int totalScorePart2 = 0;
 
-int sum = 0;
 using (var sr = new StreamReader("input.txt"))
 {
     while (!sr.EndOfStream)
     {
         input = sr.ReadLine();
-        sum += CalculateMatch(input);
+        var choices = input.ToCharArray();
+        var firstInput = choices[0];
+        var secondInput = choices[2];
+
+        totalScorePart1 += CalculateGameOutcome(firstInput, secondInput);
+
+        // Part two: pick shape to have the outcome
+        totalScorePart2 += CalculatePart2(firstInput, secondInput);
     }
 
-    Console.WriteLine($"Total score: {sum}");
-
-    // Part two: pick shape to have the outcome
+    Console.WriteLine($"Total score for part 1: {totalScorePart1}");
+    Console.WriteLine($"Total score for part 2: {totalScorePart2}");
 }
 
-int CalculateMatch(string input)
+int CalculatePart2(char opponentPick, char desiredResult)
 {
-    var choices = input.ToCharArray();
-    var opponentPick = choices[0];
-    var playerPick = choices[2];
+    // DesiredResult
+    char playerPick = CalculatePlayerPick(opponentPick, desiredResult);
 
+    int outcomePoints = CalculateGameOutcome(opponentPick, playerPick);
+    
+    return outcomePoints;
+}
+
+char CalculatePlayerPick(char opponentPick, char desiredResult)
+{
+    if (desiredResult == DesiredResult.Loss ) 
+    {
+        return opponentPick switch
+        {
+            OpponentInput.Rock => PlayerInput.Scissors,
+            OpponentInput.Paper => PlayerInput.Rock,
+            OpponentInput.Scissors => PlayerInput.Paper,
+            _ => throw new ArgumentException("Invalid input.")
+        };
+    }
+
+    if (desiredResult == DesiredResult.Draw) 
+    {
+        return opponentPick switch
+        {
+            OpponentInput.Rock => PlayerInput.Rock,
+            OpponentInput.Paper => PlayerInput.Paper,
+            OpponentInput.Scissors => PlayerInput.Scissors,
+            _ => throw new ArgumentException("Invalid input.")
+        };
+    }
+
+    if (desiredResult == DesiredResult.Win) 
+    {
+        return opponentPick switch
+        {
+            OpponentInput.Rock => PlayerInput.Paper,
+            OpponentInput.Paper => PlayerInput.Scissors,
+            OpponentInput.Scissors => PlayerInput.Rock,
+            _ => throw new ArgumentException("Invalid input.")
+        };
+    }
+
+    throw new ArgumentException("Invalid input.");
+}
+
+int CalculateGameOutcome(char opponentPick, char playerPick)
+{
     // calculate value of my choice
     var choicePoints = GetChoicePoints(playerPick);
     // calculate result of match
