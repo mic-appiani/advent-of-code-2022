@@ -2,7 +2,6 @@
 
 using (var sr = new StreamReader("input.txt"))
 {
-    // Read the stream as a string, and write the string to the console.
     input = sr.ReadToEnd();
 }
 
@@ -25,7 +24,6 @@ try
 }
 catch (Exception)
 {
-
 	throw;
 }
 
@@ -37,4 +35,5 @@ Console.WriteLine($"Highest: {highest}");
 var top3Cals = cals.OrderByDescending(x => x)
                    .Take(3)
                    .Sum();
+
 Console.WriteLine($"Top 3 sum: {top3Cals}");
