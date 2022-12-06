@@ -67,9 +67,15 @@ using (var sr = new StreamReader("input.txt"))
 
 void MoveBoxes(int from, int to, int amount)
 {
+    var tempStack = new Stack<char>();
     for (int i = 0; i < amount; i++)
     {
         var item = stacks[from].Pop();
-        stacks[to].Push(item);
+        tempStack.Push(item);
+    }
+
+    while (tempStack.Count> 0)
+    {
+        stacks[to].Push(tempStack.Pop());
     }
 }
