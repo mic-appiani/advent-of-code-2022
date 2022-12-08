@@ -52,12 +52,6 @@ for (int row = 1; row < width - 1; row++)
     }
 }
 
-
-int ScoreNorth(int row, int col)
-{
-    throw new NotImplementedException();
-}
-
 Console.WriteLine($"Visible trees inside: {visibleInside}");
 Console.WriteLine($"Total visible trees: {visibleInside + perimeter}");
 Console.WriteLine($"Top score: {topScore}");
@@ -74,7 +68,10 @@ CheckResult EvaluateTree(int row, int col)
     };
 
     var isVisible = results.Any(x => x.IsVisible);
-    return new CheckResult { IsVisible = isVisible };
+    var score = results.Select(x => x.Score)
+        .Aggregate((a, x) => a * x);
+
+    return new CheckResult { IsVisible = isVisible, Score = score  };
 }
 
 CheckResult EvaluateNorth(int row, int col)
