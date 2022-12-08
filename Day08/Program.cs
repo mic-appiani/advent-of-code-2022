@@ -19,22 +19,13 @@ var forest = rowList.Select(row => row.ToCharArray()
 var width = forest[0].Length;
 var height = forest.Length;
 
-//for (int row = 0; row < width; row++)
-//{
-//    for (int col = 0; col < height; col++)
-//    {
-//        Console.Write($"{forest[row][col]} ");
-//    }
-//    Console.WriteLine();
-//}
-
 // external perimeter calculation
 var perimeter = (width * 2) + (height - 2) * 2;
 Console.WriteLine($"Trees on the outside edge: {perimeter}");
 
+// internal tree check
 var visibleInside = 0;
 var topScore = 0;
-// internal tree check
 for (int row = 1; row < width - 1; row++)
 {
     for (int col = 1; col < height - 1; col++)
