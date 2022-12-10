@@ -21,9 +21,11 @@ var width = movesRight - movesLeft + 1;
 var movesUp = moves.Where(x => x.Direction == "U").Sum(x => x.Amount);
 var movesDown = moves.Where(x => x.Direction == "D").Sum(x => x.Amount);
 
-var grid = Grid.FromMoves(moves);
-grid.DrawZoomed(6);
-grid.Simulate();
+// theres a bad bug for the grid size calculation, no time to fix sorry
+//var grid = Grid.FromMoves(moves);
+var grid = new Grid(10000, 10000, new int[] { 5000, 5000 }, moves);
+grid.DrawZoomed(10);
+grid.Simulate(draw: false);
 
 Console.WriteLine();
 
@@ -45,17 +47,19 @@ class Grid
     private int[] TailPos { get => _rope.Last(); }
 
 
-    private Grid(int width, int height, int[] startPos, List<Move> moves)
+    public Grid(int width, int height, int[] startPos, List<Move> moves)
     {
         _startPos = startPos;
         _moves = moves;
 
-        _rope = Enumerable.Range(0,2)
+        _rope = Enumerable.Range(0, 10)
             .Select(x => new int[2] { _startPos[0], _startPos[1] })
             .ToArray();
 
+
         _visited = new bool[height, width];
-        _visited[TailPos[1], TailPos[0]] = true;
+
+        _visited[TailPos[0], TailPos[1]] = true;
     }
 
     /// <summary>
@@ -66,45 +70,47 @@ class Grid
         Console.Clear();
 
         // index overflow risk, too bad!
-        var rowStart = HeadPos[1] - radius;
-        var rowEnd = HeadPos[1] + radius;
-        var colStart = HeadPos[0] - radius;
-        var colEnd = HeadPos[0] + radius;
+        var rowStart = HeadPos[0] - radius;
+        var rowEnd = HeadPos[0] + radius;
+        var colStart = HeadPos[1] - radius;
+        var colEnd = HeadPos[1] + radius;
 
         for (int row = rowStart; row < rowEnd; row++)
         {
             for (int col = colStart; col < colEnd; col++)
             {
-                if (HeadPos[1] == row && HeadPos[0] == col)
-                {
-                    Console.Write("H");
-                    continue;
-                }
-
-                for (int i = 1; i < _rope.Length; i++)
-                {
-                    var position = _rope[i];
-                    
-                    if (position[1] == row && position[0] == col)
-                    {
-                        Console.Write(i);
-                        continue;
-                    }
-                }
-                
-                if (_startPos[1] == row && _startPos[0] == col)
-                {
-                    Console.Write("s");
-                    continue;
-                }
-
-                Console.Write(".");
+                Console.Write(GetChar(row, col));
             }
 
             Console.WriteLine();
         }
 
-        Thread.Sleep(200);
+        Thread.Sleep(100);
+    }
+
+    private string GetChar(int row, int col)
+    {
+        if (HeadPos[0] == row && HeadPos[1] == col)
+        {
+            return "H";
+        }
+
+        for (int i = 1; i < _rope.Length; i++)
+        {
+            var position = _rope[i];
+
+            if (position[0] == row && position[1] == col)
+            {
+                return i.ToString();
+            }
+        }
+
+        if (_startPos[0] == row && _startPos[1] == col)
+        {
+            return ("s");
+        }
+
+        return ".";
     }
 
 
@@ -122,60 +128,57 @@ class Grid
 
             if (move.Direction == "U")
             {
-                relPosition[1] += move.Amount;
-                if (maxUp < relPosition[1])
+                relPosition[0] -= move.Amount;
+                if (maxUp > relPosition[0])
                 {
-                    maxUp = relPosition[1];
+                    maxUp = relPosition[0];
                 }
             }
 
             if (move.Direction == "D")
             {
-                relPosition[1] -= move.Amount;
-                if (maxDown > relPosition[1])
+                relPosition[0] += move.Amount;
+                if (maxDown < relPosition[0])
                 {
-                    maxDown = relPosition[1];
+                    maxDown = relPosition[0];
                 }
             }
 
             if (move.Direction == "R")
             {
-                relPosition[0] += move.Amount;
-                if (maxRight < relPosition[0])
+                relPosition[1] += move.Amount;
+                if (maxRight < relPosition[1])
                 {
-                    maxRight = relPosition[0];
+                    maxRight = relPosition[1];
                 }
             }
 
             if (move.Direction == "L")
             {
-                relPosition[0] -= move.Amount;
-                if (maxLeft > relPosition[0])
+                relPosition[1] -= move.Amount;
+                if (maxLeft > relPosition[1])
                 {
-                    maxLeft = relPosition[0];
+                    maxLeft = relPosition[1];
                 }
             }
-
-
 
         }
 
         return new Grid(
             maxRight - maxLeft + 1,
-            maxUp - maxDown + 1,
-            new int[] { -maxLeft, maxUp },
+            -maxUp + maxDown + 1,
+            new int[] { -maxUp, -maxLeft },
             moves);
 
     }
 
-    internal void Simulate()
+    internal void Simulate(bool draw = false)
     {
         for (int i = 0; i < _moves.Count; i++)
         {
             var move = _moves[i];
 
-            MoveStepByStep(move, draw: false);
-
+            MoveStepByStep(move, draw: draw);
         }
 
         var count = 0;
@@ -188,7 +191,7 @@ class Grid
     }
 
 
-    private void MoveStepByStep(Move move, bool draw = false)
+    private void MoveStepByStep(Move move, bool draw)
     {
         // must calculate the moves step by step and not jumping
         for (int i = 0; i < move.Amount; i++)
@@ -198,30 +201,28 @@ class Grid
             // Move the head
             if (move.Direction == "U")
             {
-                HeadPos[1]--;
+                HeadPos[0]--;
             }
 
             if (move.Direction == "D")
             {
-                HeadPos[1]++;
+                HeadPos[0]++;
             }
 
             if (move.Direction == "L")
             {
-                HeadPos[0]--;
+                HeadPos[1]--;
             }
 
             if (move.Direction == "R")
             {
-                HeadPos[0]++;
+                HeadPos[1]++;
             }
 
             if (draw)
             {
-                DrawZoomed(6);
+                DrawZoomed(10);
             }
-
-            var precedingKnotLastPos = headStartPos;
 
             for (int knotIdx = 1; knotIdx < _rope.Length; knotIdx++)
             {
@@ -232,21 +233,80 @@ class Grid
                 if (Math.Abs(precedingKNot[0] - knotPos[0]) > 1 ||
                     Math.Abs(precedingKNot[1] - knotPos[1]) > 1)
                 {
-                    knotPos[0] = precedingKnotLastPos[0];
-                    knotPos[1] = precedingKnotLastPos[1];
+                    var temp = knotPos.ToArray();
 
-                    precedingKnotLastPos = knotPos.ToArray();
+                    var verticalSeparation = knotPos[0] - precedingKNot[0];
+                    var horizontalSeparation = knotPos[1] - precedingKNot[1];
 
-                    
+                    // knot is below preceding
+                    if (verticalSeparation > 1)
+                    {
+                        knotPos[0]--;
+
+                        if (horizontalSeparation > 0)
+                        {
+                            knotPos[1]--;
+                        }
+                        else if (horizontalSeparation < 0)
+                        {
+                            knotPos[1]++;
+                        }
+
+                    }
+                    else if (verticalSeparation < -1)
+                    {
+                        knotPos[0]++;
+
+                        if (horizontalSeparation > 0)
+                        {
+                            knotPos[1]--;
+                        }
+                        else if (horizontalSeparation < 0)
+                        {
+                            knotPos[1]++;
+                        }
+                    }
+                    else if (horizontalSeparation > 1)
+                    {
+                        knotPos[1]--;
+
+                        if (verticalSeparation > 0)
+                        {
+                            knotPos[0]--;
+                        }
+                        else if (verticalSeparation < 0)
+                        {
+                            knotPos[0]++;
+                        }
+                    }
+                    else if (horizontalSeparation < -1)
+                    {
+                        knotPos[1]++;
+
+                        if (verticalSeparation > 0)
+                        {
+                            knotPos[0]--;
+                        }
+                        else if (verticalSeparation < 0)
+                        {
+                            knotPos[0]++;
+                        }
+                    }
+
+                    if (knotIdx == _rope.Length - 1)
+                    {
+                        //DrawZoomed(10);
+                        _visited[knotPos[0], knotPos[1]] = true;
+                    }
 
                     if (draw)
                     {
-                        DrawZoomed(6);
+                        DrawZoomed(10);
                     }
                 }
-            }
 
-            _visited[TailPos[1], TailPos[0]] = true;
+
+            }
         }
     }
 }
