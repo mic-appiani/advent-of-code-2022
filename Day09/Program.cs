@@ -22,6 +22,7 @@ var movesUp = moves.Where(x => x.Direction == "U").Sum(x => x.Amount);
 var movesDown = moves.Where(x => x.Direction == "D").Sum(x => x.Amount);
 
 var grid = Grid.FromMoves(moves);
+grid.DrawZoomed(6);
 grid.Simulate();
 
 Console.WriteLine();
@@ -41,6 +42,7 @@ class Grid
     private int[] _headPos;
     private int[] _tailPos;
     private List<Move> _moves;
+    private bool[,] _visited;
 
     private Grid(int width, int height, int[] startPos, List<Move> moves)
     {
@@ -50,6 +52,9 @@ class Grid
         _headPos = startPos.ToArray();
         _tailPos = startPos.ToArray();
         _moves = moves;
+
+        _visited = new bool[height, width];
+        _visited[_tailPos[1], _tailPos[0]] = true;
     }
 
     public void Draw()
@@ -86,8 +91,9 @@ class Grid
     /// <summary>
     /// Draws the head and the surrounding area
     /// </summary>
-    public void DrawZoomed(int radius) 
+    public void DrawZoomed(int radius)
     {
+        Console.Clear();
         // index overflow risk, too bad!
         var rowStart = _headPos[1] - radius;
         var rowEnd = _headPos[1] + radius;
@@ -96,7 +102,7 @@ class Grid
 
         for (int row = rowStart; row < rowEnd; row++)
         {
-            for (int col = colStart;  col < colEnd; col++)
+            for (int col = colStart; col < colEnd; col++)
             {
                 if (_headPos[1] == row && _headPos[0] == col)
                 {
@@ -186,10 +192,63 @@ class Grid
     {
         for (int i = 0; i < _moves.Count; i++)
         {
-            _headPos[1]--;
-            DrawZoomed(6);
-            Thread.Sleep(200);
-            Console.Clear();
+            var move = _moves[i];
+
+            MoveStepByStep(move);
+
+            //Thread.Sleep(200);
+        }
+
+        var count = 0;
+        foreach (var visited in _visited)
+        {
+            if (visited) { count++; }
+        }
+
+        Console.WriteLine($"Visited tiles by the tail: {count}");
+    }
+
+
+    private void MoveStepByStep(Move move)
+    {
+        // must calculate the moves step by step and not jumping
+        for (int i = 0; i < move.Amount; i++)
+        {
+            var headStartPos = _headPos.ToArray();
+
+            // Move the head
+            if (move.Direction == "U")
+            {
+                _headPos[1]--;
+            }
+
+            if (move.Direction == "D")
+            {
+                _headPos[1]++;
+            }
+
+            if (move.Direction == "L")
+            {
+                _headPos[0]--;
+            }
+
+            if (move.Direction == "R")
+            {
+                _headPos[0]++;
+            }
+
+            //DrawZoomed(6);
+
+            // Move the tail
+            if (Math.Abs(_headPos[0] - _tailPos[0]) > 1 ||
+                Math.Abs(_headPos[1] - _tailPos[1]) > 1)
+            {
+                _tailPos[0] = headStartPos[0];
+                _tailPos[1] = headStartPos[1];
+
+                _visited[_tailPos[1], _tailPos[0]] = true;
+                //DrawZoomed(6);
+            }
         }
     }
 }
