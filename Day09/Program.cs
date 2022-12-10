@@ -36,8 +36,6 @@ class Move
 
 class Grid
 {
-    private int _height;
-    private int _width;
     private int[] _startPos;
     private int[][] _rope;
     private List<Move> _moves;
@@ -49,8 +47,6 @@ class Grid
 
     private Grid(int width, int height, int[] startPos, List<Move> moves)
     {
-        _width = width;
-        _height = height;
         _startPos = startPos;
         _moves = moves;
 
@@ -68,6 +64,7 @@ class Grid
     public void DrawZoomed(int radius)
     {
         Console.Clear();
+
         // index overflow risk, too bad!
         var rowStart = HeadPos[1] - radius;
         var rowEnd = HeadPos[1] + radius;
@@ -83,12 +80,19 @@ class Grid
                     Console.Write("H");
                     continue;
                 }
-                else if (TailPos[1] == row && TailPos[0] == col)
+
+                for (int i = 1; i < _rope.Length; i++)
                 {
-                    Console.Write("T");
-                    continue;
+                    var position = _rope[i];
+                    
+                    if (position[1] == row && position[0] == col)
+                    {
+                        Console.Write(i);
+                        continue;
+                    }
                 }
-                else if (_startPos[1] == row && _startPos[0] == col)
+                
+                if (_startPos[1] == row && _startPos[0] == col)
                 {
                     Console.Write("s");
                     continue;
@@ -217,20 +221,32 @@ class Grid
                 DrawZoomed(6);
             }
 
-            // Move the tail
-            if (Math.Abs(HeadPos[0] - TailPos[0]) > 1 ||
-                Math.Abs(HeadPos[1] - TailPos[1]) > 1)
+            var precedingKnotLastPos = headStartPos;
+
+            for (int knotIdx = 1; knotIdx < _rope.Length; knotIdx++)
             {
-                TailPos[0] = headStartPos[0];
-                TailPos[1] = headStartPos[1];
+                var knotPos = _rope[knotIdx];
+                var precedingKNot = _rope[knotIdx - 1];
 
-                _visited[TailPos[1], TailPos[0]] = true;
-
-                if (draw)
+                // Move the follower knot
+                if (Math.Abs(precedingKNot[0] - knotPos[0]) > 1 ||
+                    Math.Abs(precedingKNot[1] - knotPos[1]) > 1)
                 {
-                    DrawZoomed(6);
+                    knotPos[0] = precedingKnotLastPos[0];
+                    knotPos[1] = precedingKnotLastPos[1];
+
+                    precedingKnotLastPos = knotPos.ToArray();
+
+                    
+
+                    if (draw)
+                    {
+                        DrawZoomed(6);
+                    }
                 }
             }
+
+            _visited[TailPos[1], TailPos[0]] = true;
         }
     }
 }
