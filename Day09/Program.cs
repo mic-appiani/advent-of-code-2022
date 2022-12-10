@@ -39,53 +39,27 @@ class Grid
     private int _height;
     private int _width;
     private int[] _startPos;
-    private int[] _headPos;
-    private int[] _tailPos;
+    private int[][] _rope;
     private List<Move> _moves;
     private bool[,] _visited;
+
+    private int[] HeadPos { get => _rope[0]; }
+    private int[] TailPos { get => _rope.Last(); }
+
 
     private Grid(int width, int height, int[] startPos, List<Move> moves)
     {
         _width = width;
         _height = height;
         _startPos = startPos;
-        _headPos = startPos.ToArray();
-        _tailPos = startPos.ToArray();
         _moves = moves;
 
+        _rope = Enumerable.Range(0,2)
+            .Select(x => new int[2] { _startPos[0], _startPos[1] })
+            .ToArray();
+
         _visited = new bool[height, width];
-        _visited[_tailPos[1], _tailPos[0]] = true;
-    }
-
-    public void Draw()
-    {
-        var scale = 6;
-        for (int i = 0; i < _height / scale; i++)
-        {
-            for (int j = 0; j < _width / scale; j++)
-            {
-                if (_headPos[1] / scale == i && _headPos[0] / scale == j)
-                {
-                    Console.Write("H");
-                    continue;
-                }
-                else if (_tailPos[1] / scale == i && _tailPos[0] / scale == j)
-                {
-                    Console.Write("T");
-                    continue;
-                }
-                else if (_startPos[1] / scale == i && _startPos[0] / scale == j)
-                {
-                    Console.Write("s");
-                    continue;
-                }
-
-
-                Console.Write(".");
-            }
-
-            Console.WriteLine();
-        }
+        _visited[TailPos[1], TailPos[0]] = true;
     }
 
     /// <summary>
@@ -95,21 +69,21 @@ class Grid
     {
         Console.Clear();
         // index overflow risk, too bad!
-        var rowStart = _headPos[1] - radius;
-        var rowEnd = _headPos[1] + radius;
-        var colStart = _headPos[0] - radius;
-        var colEnd = _headPos[0] + radius;
+        var rowStart = HeadPos[1] - radius;
+        var rowEnd = HeadPos[1] + radius;
+        var colStart = HeadPos[0] - radius;
+        var colEnd = HeadPos[0] + radius;
 
         for (int row = rowStart; row < rowEnd; row++)
         {
             for (int col = colStart; col < colEnd; col++)
             {
-                if (_headPos[1] == row && _headPos[0] == col)
+                if (HeadPos[1] == row && HeadPos[0] == col)
                 {
                     Console.Write("H");
                     continue;
                 }
-                else if (_tailPos[1] == row && _tailPos[0] == col)
+                else if (TailPos[1] == row && TailPos[0] == col)
                 {
                     Console.Write("T");
                     continue;
@@ -125,6 +99,8 @@ class Grid
 
             Console.WriteLine();
         }
+
+        Thread.Sleep(200);
     }
 
 
@@ -194,9 +170,8 @@ class Grid
         {
             var move = _moves[i];
 
-            MoveStepByStep(move);
+            MoveStepByStep(move, draw: false);
 
-            //Thread.Sleep(200);
         }
 
         var count = 0;
@@ -209,45 +184,52 @@ class Grid
     }
 
 
-    private void MoveStepByStep(Move move)
+    private void MoveStepByStep(Move move, bool draw = false)
     {
         // must calculate the moves step by step and not jumping
         for (int i = 0; i < move.Amount; i++)
         {
-            var headStartPos = _headPos.ToArray();
+            var headStartPos = HeadPos.ToArray();
 
             // Move the head
             if (move.Direction == "U")
             {
-                _headPos[1]--;
+                HeadPos[1]--;
             }
 
             if (move.Direction == "D")
             {
-                _headPos[1]++;
+                HeadPos[1]++;
             }
 
             if (move.Direction == "L")
             {
-                _headPos[0]--;
+                HeadPos[0]--;
             }
 
             if (move.Direction == "R")
             {
-                _headPos[0]++;
+                HeadPos[0]++;
             }
 
-            //DrawZoomed(6);
+            if (draw)
+            {
+                DrawZoomed(6);
+            }
 
             // Move the tail
-            if (Math.Abs(_headPos[0] - _tailPos[0]) > 1 ||
-                Math.Abs(_headPos[1] - _tailPos[1]) > 1)
+            if (Math.Abs(HeadPos[0] - TailPos[0]) > 1 ||
+                Math.Abs(HeadPos[1] - TailPos[1]) > 1)
             {
-                _tailPos[0] = headStartPos[0];
-                _tailPos[1] = headStartPos[1];
+                TailPos[0] = headStartPos[0];
+                TailPos[1] = headStartPos[1];
 
-                _visited[_tailPos[1], _tailPos[0]] = true;
-                //DrawZoomed(6);
+                _visited[TailPos[1], TailPos[0]] = true;
+
+                if (draw)
+                {
+                    DrawZoomed(6);
+                }
             }
         }
     }
