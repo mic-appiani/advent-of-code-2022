@@ -17,6 +17,7 @@ using (var sr = new StreamReader("input.txt"))
         monkeys.Add(monkey.Key, monkey);
     }
 
+    // note: i had to peek the solutions for this thing in part 2
     var dividerMultiple = monkeys.Values.Select(x => x.TestDivider).Aggregate((a, b) => a * b);
 
     for (int round = 1; round <= 10000; round++)
