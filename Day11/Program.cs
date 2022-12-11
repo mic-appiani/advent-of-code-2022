@@ -17,7 +17,9 @@ using (var sr = new StreamReader("input.txt"))
         monkeys.Add(monkey.Key, monkey);
     }
 
-    for (int round = 1; round <= 20; round++)
+    var dividerMultiple = monkeys.Values.Select(x => x.TestDivider).Aggregate((a, b) => a * b);
+
+    for (int round = 1; round <= 10000; round++)
     {
         Console.WriteLine($"Round {round} starts.");
         var totItems = monkeys.Values.Select(x => x.StartingItems.Count).Sum();
@@ -25,7 +27,7 @@ using (var sr = new StreamReader("input.txt"))
         for (int i = 0; i < monkeys.Keys.Count; i++)
         {
             var monkey = monkeys[i.ToString()];
-            monkey.PlayRound(monkeys);
+            monkey.PlayRound(monkeys, dividerMultiple);
         }
 
         totItems = monkeys.Values.Select(x => x.StartingItems.Count).Sum();
@@ -34,7 +36,7 @@ using (var sr = new StreamReader("input.txt"))
 
     var ordered = monkeys.Values.OrderByDescending(x => x.InspectedItems).ToList();
         var top2 = ordered.Take(2).Select(x => x.InspectedItems).ToArray();
-    var monkeyBusiness = top2[0] * top2[1];
+    ulong monkeyBusiness = top2[0] * top2[1];
     Console.WriteLine($"monkey business is: {monkeyBusiness}");
 
 }
@@ -69,14 +71,14 @@ class Monkey
     public string TargetOnSuccessfulTest = string.Empty;
     public string TargetOnFailedTest = string.Empty;
     public string Operation { get; set; } = string.Empty;
-    public int InspectedItems { get; set; } = 0;
+    public ulong InspectedItems { get; set; } = 0;
 
     private void Throw(string item, string targetKey, Dictionary<string, Monkey> monkeys)
     {
         monkeys[targetKey].StartingItems.Enqueue(item);
     }
 
-    internal void PlayRound(Dictionary<string, Monkey> monkeys)
+    internal void PlayRound(Dictionary<string, Monkey> monkeys, int dividerMultiple)
     {
         while (StartingItems.Count > 0)
         {
@@ -87,7 +89,8 @@ class Monkey
             var worry = DoOperation(item);
 
             // Monkey gets bored with item.Worry level is divided by 3 to 500.
-            worry = worry / 3;
+            // worry = worry / 3;
+            worry = worry % dividerMultiple; 
 
             if (worry % TestDivider == 0)
             {
@@ -103,10 +106,10 @@ class Monkey
 
     }
 
-    private int DoOperation(string item)
+    private Int64 DoOperation(string item)
     {
         // left operand is always "old"
-        int leftOperand = int.Parse(item);
+        var leftOperand = Int64.Parse(item);
 
         var split = Operation.Split(' ');
         var rightOperandString = split[2];
@@ -114,7 +117,7 @@ class Monkey
         var rightOperand = rightOperandString switch
         {
             "old" => leftOperand,
-            _ => int.Parse(rightOperandString),
+            _ => Int64.Parse(rightOperandString),
         };
 
         var operatorSymbol = split[1];
